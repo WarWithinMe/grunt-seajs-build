@@ -196,16 +196,16 @@ module.exports = function(grunt) {
   }
 
   function colorLog ( text, color ) {
-    var reset = "\033[0m"
+    var reset = "\x1B[0m"
     switch ( color ) {
-      case "black"   : return '\033[30m' + text + reset;
-      case "red"     : return '\033[31m' + text + reset;
-      case "green"   : return '\033[32m' + text + reset;
-      case "yellow"  : return '\033[33m' + text + reset;
-      case "blue"    : return '\033[34m' + text + reset;
-      case "magenta" : return '\033[35m' + text + reset;
-      case "cyan"    : return '\033[36m' + text + reset;
-      case "white"   : return '\033[37m' + text + reset;
+      case "black"   : return '\x1B[30m' + text + reset;
+      case "red"     : return '\x1B[31m' + text + reset;
+      case "green"   : return '\x1B[32m' + text + reset;
+      case "yellow"  : return '\x1B[33m' + text + reset;
+      case "blue"    : return '\x1B[34m' + text + reset;
+      case "magenta" : return '\x1B[35m' + text + reset;
+      case "cyan"    : return '\x1B[36m' + text + reset;
+      case "white"   : return '\x1B[37m' + text + reset;
       default        : return text;
     }
   }
