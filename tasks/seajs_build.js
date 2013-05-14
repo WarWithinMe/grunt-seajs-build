@@ -91,7 +91,7 @@ module.exports = function(grunt) {
     ///////////////////////////
 
 
-    if ( !gFile.isPathInCwd( options.seajsBasePath) ) {
+    if ( !gFile.isPathInCwd( options.seajsBasePath) && !gFile.isPathCwd( options.seajsBasePath ) ) {
       grunt.fail.fatal("Seajs Base Path Not Found!");
     }
 
@@ -475,6 +475,11 @@ module.exports = function(grunt) {
 
       for ( var i = 0; i < deps.length; ++i ) {
         var depAbsPath = projectData.id2File[ deps[i] ];
+
+        if ( !depAbsPath ) {
+          grunt.fail.fatal("Can't find file when merging, the file might exist but it's not a Sea.js module : [ " + deps[i] + " ]" );
+        }
+
         this.push( depAbsPath );
         reverse_dep_map[ depAbsPath ] = true;
       }
@@ -490,7 +495,7 @@ module.exports = function(grunt) {
                       .filter(function(v){ return !reverse_dep_map.hasOwnProperty(v); }, reverse_dep_map)
                       .map(function(v){ return projectData.file2Id[v]; });
     if ( files.length == 0 ) {
-      grunt.fail.warn("Circular dependency found when merging to : " + file.dest );
+      grunt.fail.fatal("Circular dependency found when merging to : " + file.dest );
       return;
     }
 
@@ -500,11 +505,11 @@ module.exports = function(grunt) {
       if ( visited.hasOwnProperty( value ) ) { return; }
       visited[value] = true;
 
-      var absPath = this.projectData.id2File[value];
-      var deps    = this.projectData.dependency[ absPath ];
+      var abspath = this.projectData.id2File[value];
+      var deps    = this.projectData.dependency[ abspath ];
       if ( deps ) { deps.forEach( TOPO, this ); }
 
-      this.push( absPath );
+      this.push( abspath );
     }
     var sortResult = [];
     sortResult.projectData = projectData;
@@ -516,10 +521,8 @@ module.exports = function(grunt) {
       sortResult = sortResult.filter(function(v){ return files.indexOf(v) != -1; });
     }
 
-
     // Merge
-    var c = sortResult.reduce(function(pv, cv){ 
-      return pv + projectData.content[cv] + "\n"; }, "");
+    var c = sortResult.reduce(function(pv, cv){ return pv + projectData.content[cv] + "\n"; }, "");
 
     return { content : c, list : sortResult };
   }
