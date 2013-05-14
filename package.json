@@ -10,10 +10,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "none"
+    "url": "git@github.com:WarWithinMe/grunt_seajs.git"
   },
   "bugs": {
-    "url": ""
+    "url": "https://github.com/WarWithinMe/grunt_seajs/issues"
   },
   "licenses": [
     {
