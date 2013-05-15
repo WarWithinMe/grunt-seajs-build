@@ -63,6 +63,8 @@ module.exports = function(grunt) {
         , recursive  : true
         , concatDeps : false
         , buildType  : "exclude_merge"
+        , outputPath    : "build"
+        , seajsBasePath : "."
     });
     var buildType = 0;
     switch( options.buildType ) {
