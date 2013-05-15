@@ -1,4 +1,4 @@
-define('../js/data/dataB.js',[],function(require, exports, module){
+define('js/data/dataB.js',[],function(require, exports, module){
 
   exports = { data : "Mindless" };
 

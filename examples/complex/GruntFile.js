@@ -62,7 +62,7 @@ module.exports = function(grunt) {
       }
 
       , subdomain : {
-        options : { path : "app/subdomain"}
+          options : { path : "app/subdomain" }
       }
     }
   });

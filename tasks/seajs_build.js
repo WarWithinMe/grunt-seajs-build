@@ -47,7 +47,6 @@ module.exports = function(grunt) {
 
 
   grunt.registerMultiTask("seajs_build", function () {
-    grunt.log.ok( "Trasforming for target : " + this.target );
 
     var projectData = {
         content    : {}
@@ -220,7 +219,9 @@ module.exports = function(grunt) {
     for ( var i = 0, j = 0; i < bases.length; ++i ) {
       if ( !bases[i] ) { break; }
 
-      if ( bases[i] == abspaths[j] ) {
+      if ( base[i] == "." ) {
+        continue;
+      } else if ( bases[i] == abspaths[j] ) {
         ++j;
       } else {
         newPaths.push("..");
@@ -266,7 +267,7 @@ module.exports = function(grunt) {
     // This `Regex Checking` is not perfect.
     // e.g. sea-debug.js is not a CMD, but it pass the checking.
     if ( !hasDefine ) {
-      grunt.log.writeln(colorLog("   - ", "yellow") + "Ignoring none cmd : " + abspath );
+      grunt.log.writeln(colorLog("  - ", "yellow") + "Ignoring none cmd : " + abspath );
       projectData.notCMD[abspath] = true;
       return;
     }
@@ -278,11 +279,11 @@ module.exports = function(grunt) {
     var predefineID = null;
     if ( predefines == null ) {
       // This is 100% not a valid Sea.js module.
-      grunt.log.writeln(colorLog("   - ", "yellow") + "Ignoring none cmd : " + abspath );
+      grunt.log.writeln(colorLog("  - ", "yellow") + "Ignoring none cmd : " + abspath );
       projectData.notCMD[abspath] = true;
       return;
     } else if ( predefines.length ) {
-      grunt.log.writeln(colorLog("   - ", "yellow") + "Found user-defined ID and Deps : " + abspath );
+      grunt.log.writeln(colorLog("  - ", "yellow") + "Found user-defined ID and Deps : " + abspath );
 
       // If the file already has predefines. Use them, instead of generating.
       var all_deps = [];
@@ -424,7 +425,7 @@ module.exports = function(grunt) {
                         + JSON.stringify( getMergedDependency(projectData, abspath, options.seajsBasePath) )
                         + ",";
 
-    grunt.log.writeln( colorLog("   - ", 'blue') 
+    grunt.log.writeln( colorLog("  - ", 'blue') 
                         + "File : [" + abspath + "]" 
                         + colorLog(" >>>> ", 'blue') 
                         + "ID : \"" + newID + "\"" );
@@ -443,10 +444,20 @@ module.exports = function(grunt) {
 
     fileDeps.forEach(function( a_dep_id ){
 
-      var dep_abs_path = projectData.id2File[ a_dep_id ];
-      if ( projectData.dep_merge.hasOwnProperty(dep_abs_path) ) {
-        dep_abs_path = projectData.dep_merge[ dep_abs_path ];
-      }
+      var dep_abs_path   = projectData.id2File[ a_dep_id ];
+      var dep_merge      = projectData.dep_merge;
+      var dep_merge_path = dep_merge[ dep_abs_path ];
+
+      if ( dep_merge_path ) {
+        if ( dep_merge_path != dep_merge[ abspath ] ) {
+          // Use the merged file path, if current file and dependency won't merge into the same file
+          dep_abs_path = dep_merge_path;
+        } else {
+          // Dependency and current file will merge into one file.
+          // Dependency will come first, so no need to specify dependency.
+          return;
+        }
+      } 
 
       if ( dep_abs_path ) {
         dep_abs_path = resolveToBase( dep_abs_path, seajsBasePath );
