@@ -20,6 +20,7 @@ module.exports = function(grunt) {
                 // 1. The dependency is not found within the TARGET's path.
                 // 2. The dependency's path is not relative path.
                 // Otherwise, use `scheme` to determine the ID
+        , resolveID  : null
         , recursive  : true
                 // If true, add ID for files in subfolder.
         , buildType  : "exclude_merge"
@@ -62,7 +63,16 @@ module.exports = function(grunt) {
       }
 
       , subdomain : {
-          options : { path : "app/subdomain" }
+          options : { 
+              path : "app/subdomain/js"
+            , resolveID : function( id ) {
+              if ( id.indexOf("js/src/widgets/") == 0 ) {
+                return "js/src/widgets/widget.js";
+              } else if ( id.indexOf("js/src/utils/") == 0 ) {
+                return "js/src/utils/utils.js";
+              }
+            }
+          }
       }
     }
   });

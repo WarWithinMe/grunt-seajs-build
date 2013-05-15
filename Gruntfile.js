@@ -33,6 +33,13 @@ module.exports = function(grunt) {
                 // 1. The dependency is not found within the TARGET's path.
                 // 2. The dependency's path is not relative path.
                 // Otherwise, use `scheme` to determine the ID
+        , resolveID  : null
+                // When adding dependency array to `define()`, the task has to change ID to file PATH.
+                // If resolveID is a function(id){}, it is called during translate ID to PATH.
+                // 
+                // !!!!! Important, resolveID must return FALSY(null,undefined,false) or return nothing to
+                // indicate that the ID should be handled by the task.
+                // 
         , recursive  : true
                 // If true, add ID for files in subfolder.
         , buildType  : "exclude_merge"

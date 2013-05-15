@@ -33,12 +33,9 @@ module.exports = function(grunt) {
      the dependencies must comes first.
    */
 
-  var RE_HAS_DEFINE = /"(?:\\"|[^"])*"|'(?:\\'|[^'])*'|\/\*[\S\s]*?\*\/|\/(?:\\\/|[^/\r\n])+\/(?=[^\/])|\/\/.*|\.\s*define|(?:^|[^$])\b(def)(ine)\s*\(/g;
-    /**/
-  var RE_DEFINE_DEPS = /"(?:\\"|[^"])*"|'(?:\\'|[^'])*'|\/\*[\S\s]*?\*\/|\/(?:\\\/|[^/\r\n])+\/(?=[^\/])|\/\/.*|\.\s*define|(?:^|[^$])\bdefine\s*\(\s*(["']).+?\1\s*(["'])/g;
-    /*'*/
-  var RE_REQUIRE = /"(?:\\"|[^"])*"|'(?:\\'|[^'])*'|\/\*[\S\s]*?\*\/|\/(?:\\\/|[^/\r\n])+\/(?=[^\/])|\/\/.*|\.\s*require|(?:^|[^$])\brequire\s*\(\s*(["'])(.+?)\1\s*\)/g;
-    /*"*/
+  var RE_HAS_DEFINE = /"(?:\\"|[^"])*"|'(?:\\'|[^'])*'|\/\*[\S\s]*?\*\/|\/(?:\\\/|[^/\r\n])+\/(?=[^\/])|\/\/.*|\.\s*define|(?:^|[^$])\b(def)(ine)\s*\(/g; /**/
+  var RE_DEFINE_DEPS = /"(?:\\"|[^"])*"|'(?:\\'|[^'])*'|\/\*[\S\s]*?\*\/|\/(?:\\\/|[^/\r\n])+\/(?=[^\/])|\/\/.*|\.\s*define|(?:^|[^$])\bdefine\s*\(\s*(["']).+?\1\s*(["'])/g; /*'*/
+  var RE_REQUIRE = /"(?:\\"|[^"])*"|'(?:\\'|[^'])*'|\/\*[\S\s]*?\*\/|\/(?:\\\/|[^/\r\n])+\/(?=[^\/])|\/\/.*|\.\s*require|(?:^|[^$])\brequire\s*\(\s*(["'])(.+?)\1\s*\)/g; /*"*/
   var RE_DEFINE = /"(?:\\"|[^"])*"|'(?:\\'|[^'])*'|\/\*[\S\s]*?\*\/|\/(?:\\\/|[^/\r\n])+\/(?=[^\/])|\/\/.*|\.\s*define|(?:^|[^$])\b(define)\s*\(\s*({|function)/g;
 
 
@@ -329,7 +326,7 @@ module.exports = function(grunt) {
         // The SCHEME is used to transform files within this TARGET
         // The ALIAS  is used to transform files within this PROJECT
 
-        var replace = null;
+        var r = null;
 
         if ( /^\w{2,6}:\/\//.exec( m2 ) ) {
           // Do nothing if the uri is like http://, https://
@@ -342,7 +339,7 @@ module.exports = function(grunt) {
         if ( m2[0] == "/" ) {
           // Use ALIAS to get ID for `normal` uri
           if ( options.alias ) {
-            replace = options.alias( m2 );
+            r = options.alias( m2 );
           }
         } else {
           var absM2;
@@ -374,16 +371,16 @@ module.exports = function(grunt) {
           absM2 = resolveToBase( absM2, options.seajsBasePath );
 
           if ( useScheme ) {
-            replace = path2id( absM2, options.scheme );
+            r = path2id( absM2, options.scheme );
           } else {
-            replace = options.alias ? options.alias( absM2 ) : null;
+            r = options.alias ? options.alias( absM2 ) : null;
           }
         }
 
         // If we have a modified ID, use it, otherwise, use XXX from require(XXX).
-        if ( replace ) { 
-          requireMap[ m2 ] = replace;
-          requires.push( replace );
+        if ( r ) { 
+          requireMap[ m2 ] = r;
+          requires.push( r );
         } else {
           requires.push( m2 );
         }
@@ -422,7 +419,7 @@ module.exports = function(grunt) {
     var newID      = projectData.file2Id[ abspath ];
     var new_define = "define('" 
                         + newID + "',"
-                        + JSON.stringify( getMergedDependency(projectData, abspath, options.seajsBasePath) )
+                        + JSON.stringify( getMergedDependency(projectData, abspath, options) )
                         + ",";
 
     grunt.log.writeln( colorLog("  - ", 'blue') 
@@ -437,13 +434,24 @@ module.exports = function(grunt) {
   }
 
   // The dependency array contains file path ( relative to seajs's base )
-  function getMergedDependency( projectData, abspath, seajsBasePath ) {
+  function getMergedDependency( projectData, abspath, options ) {
     var calc_deps = [];
     var fileDeps = projectData.dependency[abspath];
     if ( !fileDeps ) { return calc_deps; }
 
     fileDeps.forEach(function( a_dep_id ){
 
+      // User specified a function to resolve the id to a file path
+      if ( typeof options.resolveID == "function" ) {
+        var newPath = options.resolveID( a_dep_id );
+        if ( newPath ) {
+          this.push( newPath );
+          return;
+        }
+      }
+
+      // Use default logic to resolve the id to a file,
+      // When user does nothing for the id.
       var dep_abs_path   = projectData.id2File[ a_dep_id ];
       var dep_merge      = projectData.dep_merge;
       var dep_merge_path = dep_merge[ dep_abs_path ];
@@ -459,12 +467,9 @@ module.exports = function(grunt) {
         }
       } 
 
-      if ( dep_abs_path ) {
-        dep_abs_path = resolveToBase( dep_abs_path, seajsBasePath );
-      }
+      this.push( dep_abs_path ? resolveToBase( dep_abs_path, options.seajsBasePath ) : a_dep_id );
 
-      calc_deps.push( dep_abs_path ? dep_abs_path : a_dep_id );
-    });
+    }, calc_deps);
 
     return dereplicate( calc_deps );
   }

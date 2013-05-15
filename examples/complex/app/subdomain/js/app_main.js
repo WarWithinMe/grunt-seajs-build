@@ -1,7 +1,7 @@
 define(function(){
 
-  require("js/src/widgetA.js");
-  require("js/src/widgetB.js");
+  require("js/src/widgets/widgetA.js");
+  require("js/src/widgets/widgetB.js");
 
   require("js/data/dataA.js");
 
