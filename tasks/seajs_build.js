@@ -36,7 +36,7 @@ module.exports = function(grunt) {
   var RE_HAS_DEFINE = /"(?:\\"|[^"])*"|'(?:\\'|[^'])*'|\/\*[\S\s]*?\*\/|\/(?:\\\/|[^/\r\n])+\/(?=[^\/])|\/\/.*|\.\s*define|(?:^|[^$])\b(def)(ine)\s*\(/g; /**/
   var RE_DEFINE_DEPS = /"(?:\\"|[^"])*"|'(?:\\'|[^'])*'|\/\*[\S\s]*?\*\/|\/(?:\\\/|[^/\r\n])+\/(?=[^\/])|\/\/.*|\.\s*define|(?:^|[^$])\bdefine\s*\(\s*(["']).+?\1\s*(["'])/g; /*'*/
   var RE_REQUIRE = /"(?:\\"|[^"])*"|'(?:\\'|[^'])*'|\/\*[\S\s]*?\*\/|\/(?:\\\/|[^/\r\n])+\/(?=[^\/])|\/\/.*|\.\s*require|(?:^|[^$])\brequire\s*\(\s*(["'])(.+?)\1\s*\)/g; /*"*/
-  var RE_DEFINE = /"(?:\\"|[^"])*"|'(?:\\'|[^'])*'|\/\*[\S\s]*?\*\/|\/(?:\\\/|[^/\r\n])+\/(?=[^\/])|\/\/.*|\.\s*define|(?:^|[^$])\b(define)\s*\(\s*({|function)/g;
+  var RE_DEFINE = /"(?:\\"|[^"])*"|'(?:\\'|[^'])*'|\/\*[\S\s]*?\*\/|\/(?:\\\/|[^/\r\n])+\/(?=[^\/])|\/\/.*|\.\s*define|(?:^|[^$])\b(define)\s*\(\s*("|'|\[|{|function)/g; /*"*/
 
 
   var path  = require("path");
@@ -53,6 +53,7 @@ module.exports = function(grunt) {
       , requireMap : {}
       , scanArray  : []
       , notCMD     : {}
+      , userDefined: {}
       , id2File    : {}
       , file2Id    : {}
     };
@@ -284,6 +285,8 @@ module.exports = function(grunt) {
     } else if ( predefines.length ) {
       grunt.log.writeln(colorLog("  - ", "yellow") + "Found user-defined ID and Deps : " + abspath );
 
+      projectData.userDefined[abspath] = true;
+
       // If the file already has predefines. Use them, instead of generating.
       var all_deps = [];
       var predefine_dep = false;
@@ -305,6 +308,8 @@ module.exports = function(grunt) {
         projectData.dependency[abspath] = all_deps;
         return;
       }
+
+
 
       // User did not define dependency. We need to extract them.
     }
@@ -399,7 +404,6 @@ module.exports = function(grunt) {
     projectData.dependency[abspath] = requires;
   }
 
-  // Note : transform() does not support define("string") syntax.
   function transform(options, projectData, content, abspath) {
 
     if ( projectData.notCMD[abspath] ) {
@@ -416,6 +420,12 @@ module.exports = function(grunt) {
         return m;
       }
     });
+
+    // User has already defined the define() section.
+    // So we must not touch the define() section.
+    if ( projectData.userDefined[abspath] ) { 
+      return content;
+    }
 
     // Change define(FACTORY) to define(ID,DEPENDENCIES,FACTORY)
     var newID      = projectData.file2Id[ abspath ];
