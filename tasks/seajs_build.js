@@ -415,7 +415,14 @@ module.exports = function(grunt) {
     content = content.replace( RE_REQUIRE, function( m, m1, m2, offset, string ){
 
       if ( m2 && requireMap.hasOwnProperty( m2 ) ) {
-        return 'require("' + requireMap[m2] + '")';
+        var preceding  = m.indexOf("require");
+        var newRequire = 'require("' + requireMap[m2] + '")';
+        if ( preceding != 0 ) {
+          return m.substring(0, preceding) + newRequire;
+        } else {
+          return newRequire;
+        }
+        
       } else {
         return m;
       }
